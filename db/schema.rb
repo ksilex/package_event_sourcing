@@ -1,4 +1,3 @@
-
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -11,30 +10,63 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 20_230_407_195_116) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_09_113924) do
   # These are extensions that must be enabled in order to support this database
-  enable_extension 'plpgsql'
+  enable_extension "plpgsql"
 
-  create_table 'event_store_events', force: :cascade do |t|
-    t.uuid 'event_id', null: false
-    t.string 'event_type', null: false
-    t.jsonb 'metadata'
-    t.jsonb 'data', null: false
-    t.datetime 'created_at', null: false
-    t.datetime 'valid_at'
-    t.index ['created_at'], name: 'index_event_store_events_on_created_at'
-    t.index ['event_id'], name: 'index_event_store_events_on_event_id', unique: true
-    t.index ['event_type'], name: 'index_event_store_events_on_event_type'
-    t.index ['valid_at'], name: 'index_event_store_events_on_valid_at'
+  create_table "event_store_events", force: :cascade do |t|
+    t.uuid "event_id", null: false
+    t.string "event_type", null: false
+    t.jsonb "metadata"
+    t.jsonb "data", null: false
+    t.datetime "created_at", null: false
+    t.datetime "valid_at"
+    t.index ["created_at"], name: "index_event_store_events_on_created_at"
+    t.index ["event_id"], name: "index_event_store_events_on_event_id", unique: true
+    t.index ["event_type"], name: "index_event_store_events_on_event_type"
+    t.index ["valid_at"], name: "index_event_store_events_on_valid_at"
   end
 
-  create_table 'event_store_events_in_streams', force: :cascade do |t|
-    t.string 'stream', null: false
-    t.integer 'position'
-    t.uuid 'event_id', null: false
-    t.datetime 'created_at', null: false
-    t.index ['created_at'], name: 'index_event_store_events_in_streams_on_created_at'
-    t.index %w[stream event_id], name: 'index_event_store_events_in_streams_on_stream_and_event_id', unique: true
-    t.index %w[stream position], name: 'index_event_store_events_in_streams_on_stream_and_position', unique: true
+  create_table "event_store_events_in_streams", force: :cascade do |t|
+    t.string "stream", null: false
+    t.integer "position"
+    t.uuid "event_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["created_at"], name: "index_event_store_events_in_streams_on_created_at"
+    t.index ["stream", "event_id"], name: "index_event_store_events_in_streams_on_stream_and_event_id", unique: true
+    t.index ["stream", "position"], name: "index_event_store_events_in_streams_on_stream_and_position", unique: true
   end
+
+  create_table "notifications", force: :cascade do |t|
+    t.string "phone"
+    t.string "email"
+    t.string "enabled"
+    t.uuid "package_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["package_id"], name: "index_notifications_on_package_id"
+  end
+
+  create_table "packages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "track_id"
+    t.string "status", default: "registered"
+    t.bigint "user_id", null: false
+    t.string "unit"
+    t.decimal "weight"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "location"
+    t.datetime "time"
+    t.string "company"
+    t.index ["user_id"], name: "index_packages_on_user_id"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  add_foreign_key "notifications", "packages"
+  add_foreign_key "packages", "users"
 end
