@@ -1,6 +1,6 @@
 FROM ruby:3.1.3-alpine
 ENV BUNDLER_VERSION=2.3.26
-RUN apk add --update build-base libpq-dev postgresql-dev postgresql-client tzdata
+RUN apk add --update build-base libpq-dev postgresql-dev postgresql-client tzdata bash
 WORKDIR /app
 RUN gem install bundler -v ${BUNDLER_VERSION}
 COPY Gemfile Gemfile.lock ./

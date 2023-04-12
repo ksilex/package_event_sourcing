@@ -2,8 +2,25 @@ require 'rails_event_store'
 require 'aggregate_root'
 require 'arkency/command_bus'
 
+class PackageEventStore < RailsEventStore::JSONClient
+  def publish(events, stream_name: GLOBAL_STREAM, expected_version: :any, topic: 'packages')
+    enriched_events = enrich_events_metadata(events)
+    records = transform(enriched_events)
+    append_records_to_stream(records, stream_name:, expected_version:)
+    enriched_events.zip(records) do |event, record|
+      with_metadata(correlation_id: event.metadata.fetch(:correlation_id), causation_id: event.event_id) do
+        broker.call(event, record)
+        next unless event.respond_to?(:kafka_format)
+
+        Karafka.producer.produce_sync(topic:, payload: event.kafka_format&.to_json)
+      end
+    end
+    self
+  end
+end
+
 Rails.configuration.to_prepare do
-  Rails.configuration.event_store = RailsEventStore::JSONClient.new
+  Rails.configuration.event_store = PackageEventStore.new
   Rails.configuration.command_bus = Arkency::CommandBus.new
 
   AggregateRoot.configure do |config|
