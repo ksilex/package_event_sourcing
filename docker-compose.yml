@@ -9,6 +9,7 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - database
+      - broker
     ports:
       - 3000:3000
     volumes:
@@ -22,5 +23,45 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - db_data:/var/lib/postgresql/data
+  broker:
+    image: bitnami/kafka:3.2
+    hostname: broker
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://broker:9092"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@broker:9093"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - ./kafka-data:/var/lib/kafka/data
+
+  ksqldb-server:
+    image: confluentinc/ksqldb-server:0.28.2
+    hostname: ksqldb-server
+    depends_on:
+      - broker
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_BOOTSTRAP_SERVERS: broker:9092
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+    volumes:
+      - ./ksqldb-data:/var/lib/ksqldb
+
+  ksqldb-cli:
+    image: confluentinc/ksqldb-cli:0.28.2
+    depends_on:
+      - broker
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
 volumes:
   db_data:

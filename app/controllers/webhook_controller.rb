@@ -1,6 +1,6 @@
 class WebhookController < ApplicationController
   def create
-    Package.find_by!(track_id: webhook_params[:track_id]).with_lock do
+    package.with_lock do
       UpdatePackage.new(webhook_params, event_store).call
     end
 
@@ -8,8 +8,10 @@ class WebhookController < ApplicationController
   end
 
   def webhook_params
-    params.to_unsafe_hash
+    params.to_unsafe_hash.merge!(package_id: package.id)
+  end
+
+  def package
+    @package ||= Package.find_by!(track_id: params[:track_id])
   end
 end
-
-# { location: data[:location], time: data[:time], weight: data[:weight][:value], unit: data[:weight][:unit] }
