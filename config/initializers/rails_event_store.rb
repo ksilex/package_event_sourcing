@@ -12,6 +12,10 @@ Rails.configuration.to_prepare do
 
   # Subscribe event handlers below
   Rails.configuration.event_store.tap do |store|
+    store.subscribe(PackageModelHandler, to: [PackageRegistered, PackageArrived, PackageDelivered, PackageDeparted, PackageDeliveryFailed])
+    store.subscribe(NotificationModelHandler, to: [NotificationRequested])
+    store.subscribe(PackageStatusHandler, to: [PackageArrived, PackageDelivered, PackageDeparted, PackageDeliveryFailed])
+    store.subscribe(UserNotifiedHandler, to: [UserNotified])
     # store.subscribe(InvoiceReadModel.new, to: [InvoicePrinted])
     # store.subscribe(lambda { |event| SendOrderConfirmation.new.call(event) }, to: [OrderSubmitted])
     # store.subscribe_to_all_events(lambda { |event| Rails.logger.info(event.event_type) })
